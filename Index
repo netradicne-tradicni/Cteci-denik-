@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Můj čtenářský deník</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- PWA: manifest + barva horní lišty -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#020617">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+    main {
+      padding: 1rem 1.5rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .layout {
+      display: grid;
+      gap: 1rem;
+    }
+    @media (min-width: 900px) {
+      .layout {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+      }
+    }
+    .card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+      color: #9ca3af;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    input[type="file"] {
+      padding: 0.2rem 0;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px #6366f1;
+    }
+    .row {
+      display: grid;
+      gap: 0.5rem;
+    }
+    @media (min-width: 600px) {
+      .row-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .row-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    button {
+      border: none;
+      padding: 0.5rem 0.8rem;
+      border-radius: 999px;
+      background: #4f46e5;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    button.secondary {
+      background: #111827;
+      border: 1px solid #374151;
+    }
+    button.small {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    button:hover {
+      filter: brightness(1.08);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .toolbar select, .toolbar input {
+      width: auto;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      border: 1px solid #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .status-chci { background: rgba(59,130,246,0.12); }
+    .status-rozc { background: rgba(234,179,8,0.12); }
+    .status-doc { background: rgba(34,197,94,0.12); }
+    .status-dnf { background: rgba(248,113,113,0.12); }
+    .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: #111827;
+      margin-right: 0.25rem;
+      margin-bottom: 0.2rem;
+      border: 1px dashed #374151;
+    }
+    .book-list {
+      display: grid;
+      gap: 0.6rem;
+    }
+    .book-item {
+      padding: 0.7rem 0.8rem;
+      border-radius: 0.75rem;
+      border: 1px solid #111827;
+      background: #020617;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.7rem;
+      align-items: center;
+    }
+    .book-cover {
+      width: 50px;
+      min-width: 50px;
+      height: 70px;
+      border-radius: 0.4rem;
+      overflow: hidden;
+      border: 1px solid #111827;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #6b7280;
+    }
+    .book-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .book-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .book-meta {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .book-notes {
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+    }
+    .pill-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    @media (min-width: 600px) {
+      .pill-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+    }
+    .empty {
+      font-size: 0.85rem;
+      color: #6b7280;
+      font-style: italic;
+    }
+    .stars {
+      font-size: 0.8rem;
+      color: #facc15;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.1rem;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>📚 Můj čtenářský deník</h1>
+</header>
+
+<main>
+  <div class="layout">
+    <!-- FORMULÁŘ -->
+    <section class="card">
+      <h2>Přidat / upravit knihu</h2>
+      <form id="book-form">
+        <input type="hidden" id="book-id">
+        <input type="hidden" id="existing-cover">
+        <div class="row">
+          <div>
+            <label for="title">Název knihy</label>
+            <input type="text" id="title" required placeholder="Název…">
+          </div>
+          <div>
+            <label for="author">Autor</label>
+            <input type="text" id="author" placeholder="Autor…">
+          </div>
+        </div>
+
+        <div class="row row-3" style="margin-top:0.5rem;">
+          <div>
+            <label for="status">Stav</label>
+            <select id="status">
+              <option value="chci">Chci číst</option>
+              <option value="rozc">Rozečteno</option>
+              <option value="doc">Dočteno</option>
+              <option value="dnf">DNF</option>
+            </select>
+          </div>
+          <div>
+            <label for="rating">Hodnocení ⭐</label>
+            <select id="rating">
+              <option value="">–</option>
+              <option value="1">1 ⭐</option>
+              <option value="2">2 ⭐⭐</option>
+              <option value="3">3 ⭐⭐⭐</option>
+              <option value="4">4 ⭐⭐⭐⭐</option>
+              <option value="5">5 ⭐⭐⭐⭐⭐</option>
+            </select>
+          </div>
+          <div>
+            <label for="tags">Tagy (oddělené čárkou)</label>
+            <input type="text" id="tags" placeholder="goth, cosy, maturita…">
+          </div>
+        </div>
+
+        <div class="row row-2" style="margin-top:0.5rem;">
+          <div>
+            <label for="startDate">Začátek čtení</label>
+            <input type="date" id="startDate">
+          </div>
+          <div>
+            <label for="endDate">Dočteno</label>
+            <input type="date" id="endDate">
+          </div>
+        </div>
+
+        <div style="margin-top:0.5rem;">
+          <label for="cover">Fotka obálky (volitelné)</label>
+          <input type="file" id="cover" accept="image/*">
+          <div class="hint">
+            Fotka se uloží do tvého prohlížeče a bude fungovat i offline.  
+            Při úpravě knihy zůstane stará fotka, pokud nenahraješ novou.
+          </div>
+        </div>
+
+        <div style="margin-top:0.5rem;">
+          <label for="notes">Poznámka</label>
+          <textarea id="notes" placeholder="Pocity, trigger warningy, vibe…"></textarea>
+        </div>
+
+        <div style="margin-top:0.8rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+          <button type="button" class="secondary" id="reset-form">Vymazat formulář</button>
+          <button type="submit">💾 Uložit knihu</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SEZNAM KNIH -->
+    <section class="card">
+      <h2>Moje knihy</h2>
+      <div class="toolbar">
+        <div>
+          <label for="filter-status">Filtr stavu</label>
+          <select id="filter-status">
+            <option value="all">Vše</option>
+            <option value="chci">Chci číst</option>
+            <option value="rozc">Rozečteno</option>
+            <option value="doc">Dočteno</option>
+            <option value="dnf">DNF</option>
+          </select>
+        </div>
+        <div>
+          <label for="search">Hledat</label>
+          <input type="text" id="search" placeholder="Název nebo autor…">
+        </div>
+      </div>
+      <div id="book-list" class="book-list"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const STORAGE_KEY = 'ctenarskyDenikBooks_v2'; // verze s obálkami
+
+  function loadBooks() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Chyba při čtení z localStorage', e);
+      return [];
+    }
+  }
+
+  function saveBooks(books) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  }
+
+  function createId() {
+    return 'b_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+  }
+
+  function statusLabel(status) {
+    switch (status) {
+      case 'chci': return 'Chci číst';
+      case 'rozc': return 'Rozečteno';
+      case 'doc': return 'Dočteno';
+      case 'dnf': return 'DNF';
+      default: return status;
+    }
+  }
+
+  function statusClass(status) {
+    switch (status) {
+      case 'chci': return 'status-chci';
+      case 'rozc': return 'status-rozc';
+      case 'doc': return 'status-doc';
+      case 'dnf': return 'status-dnf';
+      default: return '';
+    }
+  }
+
+  function renderBooks() {
+    const listEl = document.getElementById('book-list');
+    const filterStatus = document.getElementById('filter-status').value;
+    const search = document.getElementById('search').value.toLowerCase().trim();
+    const books = loadBooks().sort((a, b) => b.createdAt - a.createdAt);
+
+    const filtered = books.filter(b => {
+      if (filterStatus !== 'all' && b.status !== filterStatus) return false;
+      if (!search) return true;
+      const text = (b.title + ' ' + (b.author || '')).toLowerCase();
+      return text.includes(search);
+    });
+
+    listEl.innerHTML = '';
+
+    if (!filtered.length) {
+      const div = document.createElement('div');
+      div.className = 'empty';
+      div.textContent = 'Zatím žádné knihy. Přidej první nahoře vlevo. ✨';
+      listEl.appendChild(div);
+      return;
+    }
+
+    filtered.forEach(book => {
+      const item = document.createElement('div');
+      item.className = 'book-item';
+
+      // COVER
+      const coverWrap = document.createElement('div');
+      coverWrap.className = 'book-cover';
+
+      if (book.cover) {
+        const img = document.createElement('img');
+        img.src = book.cover;
+        img.alt = 'Obálka';
+        coverWrap.appendChild(img);
+      } else {
+        coverWrap.textContent = 'bez obálky';
+      }
+
+      // TEXT
+      const middle = document.createElement('div');
+
+      const title = document.createElement('div');
+      title.className = 'book-title';
+      title.textContent = book.title || 'Bez názvu';
+
+      const meta = document.createElement('div');
+      meta.className = 'book-meta';
+      meta.textContent = [book.author, book.startDate && ('od ' + book.startDate), book.endDate && ('do ' + book.endDate)]
+        .filter(Boolean)
+        .join(' • ');
+
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + statusClass(book.status);
+      badge.textContent = statusLabel(book.status);
+
+      const rating = document.createElement('span');
+      rating.className = 'stars';
+      if (book.rating) {
+        rating.textContent = ' • ' + '★'.repeat(book.rating);
+      }
+
+      const tagsWrap = document.createElement('div');
+      if (book.tags && book.tags.length) {
+        book.tags.forEach(t => {
+          const tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.textContent = t;
+          tagsWrap.appendChild(tag);
+        });
+      }
+
+      const notes = document.createElement('div');
+      notes.className = 'book-notes';
+      if (book.notes) {
+        notes.textContent = book.notes;
+      }
+
+      const metaLine = document.createElement('div');
+      metaLine.appendChild(badge);
+      if (book.rating) {
+        metaLine.appendChild(rating);
+      }
+
+      middle.appendChild(title);
+      middle.appendChild(meta);
+      middle.appendChild(metaLine);
+      if (tagsWrap.childNodes.length) middle.appendChild(tagsWrap);
+      if (book.notes) middle.appendChild(notes);
+
+      // BUTTONS
+      const right = document.createElement('div');
+      right.className = 'pill-buttons';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'small secondary';
+      editBtn.textContent = '✏ Upravit';
+      editBtn.addEventListener('click', () => fillForm(book.id));
+
+      const cycleBtn = document.createElement('button');
+      cycleBtn.className = 'small secondary';
+      cycleBtn.textContent = '↻ Stav';
+      cycleBtn.title = 'Posunout stav (Chci → Rozečteno → Dočteno → DNF → Chci)';
+      cycleBtn.addEventListener('click', () => cycleStatus(book.id));
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'small secondary';
+      deleteBtn.textContent = '🗑';
+      deleteBtn.title = 'Smazat';
+      deleteBtn.addEventListener('click', () => deleteBook(book.id));
+
+      right.appendChild(editBtn);
+      right.appendChild(cycleBtn);
+      right.appendChild(deleteBtn);
+
+      item.appendChild(coverWrap);
+      item.appendChild(middle);
+      item.appendChild(right);
+      listEl.appendChild(item);
+    });
+  }
+
+  function fillForm(id) {
+    const books = loadBooks();
+    const book = books.find(b => b.id === id);
+    if (!book) return;
+    document.getElementById('book-id').value = book.id;
+    document.getElementById('existing-cover').value = book.cover || '';
+    document.getElementById('title').value = book.title || '';
+    document.getElementById('author').value = book.author || '';
+    document.getElementById('status').value = book.status || 'chci';
+    document.getElementById('rating').value = book.rating || '';
+    document.getElementById('tags').value = (book.tags || []).join(', ');
+    document.getElementById('startDate').value = book.startDate || '';
+    document.getElementById('endDate').value = book.endDate || '';
+    document.getElementById('notes').value = book.notes || '';
+    document.getElementById('cover').value = ''; // soubor nejde předvyplnit
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cycleStatus(id) {
+    const order = ['chci', 'rozc', 'doc', 'dnf'];
+    const books = loadBooks();
+    const idx = books.findIndex(b => b.id === id);
+    if (idx === -1) return;
+    const current = books[idx].status || 'chci';
+    const i = order.indexOf(current);
+    const next = order[(i + 1) % order.length];
+    books[idx].status = next;
+    saveBooks(books);
+    renderBooks();
+  }
+
+  function deleteBook(id) {
+    if (!confirm('Opravdu chceš knihu smazat?')) return;
+    let books = loadBooks();
+    books = books.filter(b => b.id !== id);
+    saveBooks(books);
+    renderBooks();
+  }
+
+  function resetForm() {
+    document.getElementById('book-id').value = '';
+    document.getElementById('existing-cover').value = '';
+    document.getElementById('book-form').reset();
+  }
+
+  function saveBookWithCover(coverDataUrlOrNull) {
+    const id = document.getElementById('book-id').value || createId();
+    const title = document.getElementById('title').value.trim();
+    const author = document.getElementById('author').value.trim();
+    const status = document.getElementById('status').value;
+    const ratingVal = document.getElementById('rating').value;
+    const rating = ratingVal ? Number(ratingVal) : null;
+    const tagsRaw = document.getElementById('tags').value;
+    const tags = tagsRaw.split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+    const startDate = document.getElementById('startDate').value || null;
+    const endDate = document.getElementById('endDate').value || null;
+    const notes = document.getElementById('notes').value.trim();
+    const existingCover = document.getElementById('existing-cover').value || null;
+
+    if (!title) {
+      alert('Název knihy je povinný.');
+      return;
+    }
+
+    const books = loadBooks();
+    const existingIndex = books.findIndex(b => b.id === id);
+
+    const now = Date.now();
+    const cover = coverDataUrlOrNull !== null
+      ? coverDataUrlOrNull
+      : (existingIndex !== -1 ? (books[existingIndex].cover || existingCover) : existingCover);
+
+    const bookData = {
+      id,
+      title,
+      author,
+      status,
+      rating,
+      tags,
+      startDate,
+      endDate,
+      notes,
+      cover: cover || null,
+      createdAt: existingIndex !== -1 ? books[existingIndex].createdAt : now,
+      updatedAt: now
+    };
+
+    if (existingIndex !== -1) {
+      books[existingIndex] = bookData;
+    } else {
+      books.push(bookData);
+    }
+
+    saveBooks(books);
+    resetForm();
+    renderBooks();
+  }
+
+  document.getElementById('book-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('cover');
+    const file = fileInput.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        saveBookWithCover(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // žádná nová fotka → použij existující (pokud je)
+      saveBookWithCover(null);
+    }
+  });
+
+  document.getElementById('reset-form').addEventListener('click', resetForm);
+  document.getElementById('filter-status').addEventListener('change', renderBooks);
+  document.getElementById('search').addEventListener('input', renderBooks);
+
+  // PWA: registrace service workeru
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.error('SW registrace selhala', err);
+      });
+    });
+  }
+
+  renderBooks();
+</script>
+</body>
+</html>
